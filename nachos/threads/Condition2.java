@@ -41,6 +41,7 @@ public class Condition2 {
     /**
      * Wake up at most one thread sleeping on this condition variable. The
      * current thread must hold the associated lock.
+     * Test Change 1
      */
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
