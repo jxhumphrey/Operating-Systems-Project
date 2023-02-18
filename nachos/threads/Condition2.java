@@ -21,8 +21,11 @@ public class Condition2 {
      *				<tt>wake()</tt>, or <tt>wakeAll()</tt>.
      */
     public Condition2(Lock conditionLock) {
+
 	this.conditionLock = conditionLock;
+
     waitQueue = new LinkedList<KThread>();
+
     }
 
     /**
@@ -34,7 +37,7 @@ public class Condition2 {
     public void sleep() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 
-    boolean initialStatus = Machine.interrupt().disable();
+    boolean startingStatus = Machine.interrupt().disable();
 
 	conditionLock.release();
 
@@ -44,16 +47,27 @@ public class Condition2 {
 
 	conditionLock.acquire();
 
-    Machine.interrupt().restore(initialStatus);
+    Machine.interrupt().restore(startingStatus);
     }
 
     /**
      * Wake up at most one thread sleeping on this condition variable. The
      * current thread must hold the associated lock.
-     * Test Change 1
+     * 
      */
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+
+    boolean startingStatus = Machine.interrupt().disable();
+
+    if (waitQueue.size()!=0){
+
+			(waitQueue.removeFirst()).ready();
+	}
+		
+	Machine.interrupt().restore(startingStatus);
+
+
     }
 
     /**
@@ -61,7 +75,17 @@ public class Condition2 {
      * thread must hold the associated lock.
      */
     public void wakeAll() {
+
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+
+    boolean startingStatus = Machine.interrupt().disable();
+
+    while (waitQueue.size()!=0){
+
+			wake();
+	}
+		
+	Machine.interrupt().restore(startingStatus);
     }
 
     private Lock conditionLock;
