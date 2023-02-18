@@ -35,6 +35,7 @@ public class Condition2 {
      * automatically reacquire the lock before <tt>sleep()</tt> returns.
      */
     public void sleep() {
+        
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 
     boolean startingStatus = Machine.interrupt().disable();
