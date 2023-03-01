@@ -103,7 +103,9 @@ public class Condition2 {
 
     private Lock conditionLock;
 	private LinkedList<KThread> waitQueue;
+    
     public static void main(String[] args) {
-        selfTest();
-      }
+        Condition2.selfTest();
+    }
 }
+
