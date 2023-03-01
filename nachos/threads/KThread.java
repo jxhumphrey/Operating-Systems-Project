@@ -1,5 +1,8 @@
 package nachos.threads;
 
+import java.util.ArrayDeque;
+import java.lang.Exception;
+import java.util.NoSuchElementException;
 import nachos.machine.*;
 
 /**
@@ -49,7 +52,10 @@ public class KThread {
 	else {
 	    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 	    readyQueue.acquire(this);	    
-
+            
+            //Task 1.1
+            waitingThreads = new ArrayDeque<>();
+            
 	    currentThread = this;
 	    tcb = TCB.currentTCB();
 	    name = "main";
@@ -191,16 +197,25 @@ public class KThread {
 	Lib.assertTrue(toBeDestroyed == null);
 	toBeDestroyed = currentThread;
 
-
 	currentThread.status = statusFinished;
 	
+        //Task 1.1
+        KThread thread;
+        try {
+            while( (thread = waitingThreads.remove()) != null) {
+                thread.ready();
+            }
+        } catch(NoSuchElementException e) {
+            
+        }
+        
 	sleep();
     }
 
     /**
      * Relinquish the CPU if any other thread is ready to run. If so, put the
      * current thread on the ready queue, so that it will eventually be
-     * rescheuled.
+     * rescheduled.
      *
      * <p>
      * Returns immediately if no other thread is ready to run. Otherwise
@@ -274,9 +289,19 @@ public class KThread {
      */
     public void join() {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
+	//Lib.assertTrue(this != currentThread);
 
-	Lib.assertTrue(this != currentThread);
-
+        Machine.interrupt().disable();
+        
+        if ( this == currentThread || status != statusFinished ) {
+            Machine.interrupt().enable();
+            throw new AssertionError();
+        } else {
+            sleep();
+            waitingThreads.add(currentThread);
+        }
+        
+        Machine.interrupt().enable();
     }
 
     /**
@@ -385,7 +410,7 @@ public class KThread {
 	PingTest(int which) {
 	    this.which = which;
 	}
-	
+        
 	public void run() {
 	    for (int i=0; i<5; i++) {
 		System.out.println("*** thread " + which + " looped "
@@ -396,15 +421,66 @@ public class KThread {
 
 	private int which;
     }
+    
+    private static class JoinTest implements Runnable {
+	JoinTest(int which) {
+            this.which = which;
+        }
+        
+	public void run() { }
 
+	private int which;
+    }
+
+    private static class thread implements Runnable {
+	thread(int which) {
+            this.which = which;
+        }
+        
+	public void run() { }
+
+	private int which;
+    }
     /**
      * Tests whether this module is working.
      */
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
+        //Performance Test Case
+        
+        //Version 1: Non-join
 	new KThread(new PingTest(1)).setName("forked thread").fork();
 	new PingTest(0).run();
+        
+        //Version 2: Join
+        
+        //General Test Case 1: Current thread cannot join itself
+        new KThread(new thread(0)).fork();
+        try {
+            currentThread.join();
+        } catch(AssertionError e) {
+            System.out.println("Current thread cannot join itself or thread is finished");
+        }
+            
+        //General Test Case 2: If thread is finished, nothing should happen
+        KThread done = new KThread(new thread(0));
+        done.fork();
+        while( currentThread() == done) {
+            //Busy Wait
+        }
+        System.out.println(done.status);
+        
+        try {
+            done.join();
+        } catch(AssertionError e) {
+            System.out.println("Current thread cannot join itself or thread is finished");
+        }
+            
+        //General Test Case 3: waiting threads are woken up by the caller
+        //KThread thread1 = new KThread(new JoinTest(1));
+        //KThread thread2 = new KThread(new JoinTest(2));
+        
     }
 
     private static final char dbgThread = 't';
@@ -440,7 +516,8 @@ public class KThread {
     /** Number of times the KThread constructor was called. */
     private static int numCreated = 0;
 
-    
+    private static ArrayDeque<KThread> waitingThreads = null;
+    //private static ThreadQueue waitingThreads = null;
     private static ThreadQueue readyQueue = null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;

@@ -44,7 +44,7 @@ public class Condition2 {
 
     waitQueue.add(KThread.currentThread());
 
-    KThread.currentThread().sleep();
+        KThread.sleep();
 
 	conditionLock.acquire();
 
@@ -59,7 +59,7 @@ public class Condition2 {
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 
-    boolean startingStatus = Machine.interrupt().disable();
+        boolean startingStatus = Machine.interrupt().disable();
 
     
     if (waitQueue.size()!=0){
@@ -83,11 +83,14 @@ public class Condition2 {
     boolean startingStatus = Machine.interrupt().disable();
 
     
+
+
     while (waitQueue.size()!=0){
 
 			wake();
 	}
 	
+
 	Machine.interrupt().restore(startingStatus);
     }
 
