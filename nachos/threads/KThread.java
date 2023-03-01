@@ -432,34 +432,55 @@ public class KThread {
 	private int which;
     }
 
+    private static class thread implements Runnable {
+	thread(int which) {
+            this.which = which;
+        }
+        
+	public void run() { }
+
+	private int which;
+    }
     /**
      * Tests whether this module is working.
      */
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
+        //Performance Test Case
+        
+        //Version 1: Non-join
 	new KThread(new PingTest(1)).setName("forked thread").fork();
 	new PingTest(0).run();
         
-        //Test Case 1: Cannot join itself
+        //Version 2: Join
+        
+        //General Test Case 1: Current thread cannot join itself
+        new KThread(new thread(0)).fork();
         try {
             currentThread.join();
         } catch(AssertionError e) {
             System.out.println("Current thread cannot join itself or thread is finished");
         }
             
-        //Test Case 2: If finished, nothing should happen
-        KThread done = new KThread(new JoinTest(2));
-        //done.run();
-        //done.join();
+        //General Test Case 2: If thread is finished, nothing should happen
+        KThread done = new KThread(new thread(0));
+        done.fork();
+        while( currentThread() == done) {
+            //Busy Wait
+        }
+        System.out.println(done.status);
+        
+        try {
+            done.join();
+        } catch(AssertionError e) {
+            System.out.println("Current thread cannot join itself or thread is finished");
+        }
             
-        //Test Case 3: waiting threads are woken up by the caller
+        //General Test Case 3: waiting threads are woken up by the caller
+        //KThread thread1 = new KThread(new JoinTest(1));
+        //KThread thread2 = new KThread(new JoinTest(2));
         
-        //General Test Case: Sum integers from 1-10
-        
-        //Version 1: Using 1 thread
-        
-        //Version 2: Using 2 threads, joining them
     }
 
     private static final char dbgThread = 't';
