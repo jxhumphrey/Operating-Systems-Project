@@ -1,6 +1,7 @@
 package nachos.threads;
 
 import nachos.machine.*;
+import java.util.LinkedList;
 
 /**
  * A <i>communicator</i> allows threads to synchronously exchange 32-bit
@@ -13,7 +14,35 @@ public class Communicator {
     /**
      * Allocate a new communicator.
      */
+    private Lock lock;
+    private LinkedList<thread> listeners;
+    private LinkedList<thread> speakers;
+    
     public Communicator() {
+        this.lock = new Lock();
+        this.listeners = new LinkedList<>();
+        this.speakers = new LinkedList<>();
+    }
+    
+    public class thread {
+        private Condition2 cond;
+        private int word;
+        
+        public thread(Condition2 cond){
+            this.cond = cond;
+        }
+        
+        public int getWord(){
+            return this.word;
+        }
+        
+        public void setWord(int word){
+            this.word = word;
+        }
+        
+        public Condition2 getCondition(){
+            return cond;
+        }
     }
 
     /**
@@ -27,6 +56,19 @@ public class Communicator {
      * @param	word	the integer to transfer.
      */
     public void speak(int word) {
+        lock.acquire();
+        if (listeners.isEmpty()){
+            Condition2 cond = new Condition2(lock);
+            speakers.addFirst(new thread(cond));
+            speakers.getFirst().setWord(word);
+            speakers.getFirst().getCondition().sleep();
+            
+        } else {
+            listeners.getFirst().setWord(word);
+            listeners.getFirst().getCondition().wake();
+            listeners.removeFirst();
+        }
+        lock.release();
     }
 
     /**
@@ -36,6 +78,21 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
-	return 0;
+        lock.acquire();
+        int word;
+        if (speakers.isEmpty()){
+            Condition2 cond = new Condition2(lock);
+            listeners.addFirst(new thread(cond));
+            listeners.getFirst().getCondition().sleep();
+            
+        } else {
+            listeners.getFirst().setWord(speakers.getFirst().getWord());
+            speakers.getFirst().getCondition().wake();
+        }
+        
+        word = listeners.getFirst().getWord();
+        listeners.removeFirst();
+        lock.release();
+        return word;
     }
 }
