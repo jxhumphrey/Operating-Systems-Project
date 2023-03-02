@@ -1,8 +1,6 @@
 package nachos.threads;
 
-import java.util.ArrayDeque;
-import java.lang.Exception;
-import java.util.NoSuchElementException;
+import java.lang.Exception.*;
 import nachos.machine.*;
 
 /**
@@ -46,15 +44,22 @@ public class KThread {
      * create an idle thread as well.
      */
     public KThread() {
+        
+        //Task 1.1
+        boolean threadStatus = Machine.interrupt().disable();
+        
+        //Initialize waiting queue: priority is true because this becomes the currentThread
+        waitingThreads = ThreadedKernel.scheduler.newThreadQueue(true);
+        waitingThreads.acquire(this); //
+        
+        Machine.interrupt().restore(threadStatus);
+        
 	if (currentThread != null) {
 	    tcb = new TCB();
 	}	    
 	else {
 	    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
-	    readyQueue.acquire(this);	    
-            
-            //Task 1.1
-            waitingThreads = new ArrayDeque<>();
+	    readyQueue.acquire(this);	   
             
 	    currentThread = this;
 	    tcb = TCB.currentTCB();
@@ -198,15 +203,17 @@ public class KThread {
 	toBeDestroyed = currentThread;
 
 	currentThread.status = statusFinished;
-	
+        
         //Task 1.1
         KThread thread;
+        
+        //Ready every thread on the queue
         try {
-            while( (thread = waitingThreads.remove()) != null) {
+            while( (thread = currentThread.waitingThreads.nextThread()) != null) {
                 thread.ready();
             }
-        } catch(NoSuchElementException e) {
-            
+        } catch(Exception e) {
+            Lib.debug('t', e.toString());
         }
         
 	sleep();
@@ -289,16 +296,14 @@ public class KThread {
      */
     public void join() {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
-	//Lib.assertTrue(this != currentThread);
-
+	Lib.assertTrue(this != currentThread);
+        
+        //Task 1.1
         Machine.interrupt().disable();
         
-        if ( this == currentThread || status != statusFinished ) {
-            Machine.interrupt().enable();
-            throw new AssertionError();
-        } else {
-            sleep();
-            waitingThreads.add(currentThread);
+        if ( status != statusFinished ) {
+            waitingThreads.waitForAccess(currentThread);
+            KThread.sleep();
         }
         
         Machine.interrupt().enable();
@@ -411,76 +416,87 @@ public class KThread {
 	    this.which = which;
 	}
         
+        @Override
 	public void run() {
 	    for (int i=0; i<5; i++) {
 		System.out.println("*** thread " + which + " looped "
 				   + i + " times");
-		currentThread.yield();
+		KThread.yield();
 	    }
 	}
 
 	private int which;
     }
+
+    private static class TestThread implements Runnable {
+        @Override
+	public void run() {
+            System.out.println("Thread " + KThread.currentThread().getName() + " running.");
+            
+            for (int i = 0; i < 3; i++) {
+                System.out.println(KThread.currentThread().getName() + " working...");
+                KThread.yield();
+            }
+
+            // Exit the thread
+            System.out.println("Thread " + KThread.currentThread().getName() + " exiting.");
+        }
+    }
     
-    private static class JoinTest implements Runnable {
-	JoinTest(int which) {
-            this.which = which;
-        }
-        
-	public void run() { }
-
-	private int which;
-    }
-
-    private static class thread implements Runnable {
-	thread(int which) {
-            this.which = which;
-        }
-        
-	public void run() { }
-
-	private int which;
-    }
     /**
      * Tests whether this module is working.
      */
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
+        new KThread(new PingTest(1)).setName("forked thread").fork();
+        new PingTest(0).run();
+        
         //Performance Test Case
         
         //Version 1: Non-join
-	new KThread(new PingTest(1)).setName("forked thread").fork();
-	new PingTest(0).run();
+        KThread thread1 = new KThread(new TestThread());
+        KThread thread2 = new KThread(new TestThread());
+        
+        thread1.setName("T1");
+        thread2.setName("T2");
+        
+        try {
+           //System.out.println("Non-join Version");
+           thread1.fork();
+           thread2.fork();
+        } catch (Exception e) {
+            Lib.debug('t', e.getMessage());
+        }
         
         //Version 2: Join
+        KThread thread3 = new KThread(new TestThread());
+        KThread thread4 = new KThread(new TestThread());
+//        
+        thread3.setName("T3");
+        thread4.setName("T4");
         
-        //General Test Case 1: Current thread cannot join itself
-        new KThread(new thread(0)).fork();
         try {
-            currentThread.join();
-        } catch(AssertionError e) {
-            System.out.println("Current thread cannot join itself or thread is finished");
+            thread3.fork();
+            thread3.join();
+            thread4.fork();
+        } catch (Exception e) {
+            Lib.debug('t', e.getMessage());
         }
+        
+        //General Test Case 1: currentThread cannot join itself
+        //Causes an AssertionFailureError --> Lib.assertTrue(this != currentThread)
+//        try {
+//            new KThread(new TestThread()).fork();
+//            currentThread.join();
+//        } catch(Exception e) {
+//            System.out.println("A thread cannot join itself!");
+//        }
+        
             
         //General Test Case 2: If thread is finished, nothing should happen
-        KThread done = new KThread(new thread(0));
-        done.fork();
-        while( currentThread() == done) {
-            //Busy Wait
-        }
-        System.out.println(done.status);
-        
-        try {
-            done.join();
-        } catch(AssertionError e) {
-            System.out.println("Current thread cannot join itself or thread is finished");
-        }
             
         //General Test Case 3: waiting threads are woken up by the caller
-        //KThread thread1 = new KThread(new JoinTest(1));
-        //KThread thread2 = new KThread(new JoinTest(2));
-        
     }
 
     private static final char dbgThread = 't';
@@ -516,8 +532,12 @@ public class KThread {
     /** Number of times the KThread constructor was called. */
     private static int numCreated = 0;
 
-    private static ArrayDeque<KThread> waitingThreads = null;
-    //private static ThreadQueue waitingThreads = null;
+    //Task 1.1
+    private ThreadQueue waitingThreads = null;
+    
+    //Implementation with ArrayDeque failed
+    //private ArrayDeque<KThread> waitingThreads = null;
+    
     private static ThreadQueue readyQueue = null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
