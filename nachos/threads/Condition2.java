@@ -97,15 +97,11 @@ public class Condition2 {
     
     public static void selfTest(){ 
 
-       System.out.println("--------------Testing Condition 2 ------------------");
+       System.out.println("test1");
     }
 
 
     private Lock conditionLock;
 	private LinkedList<KThread> waitQueue;
-    
-    public static void main(String[] args) {
-        Condition2.selfTest();
-    }
-}
 
+}
