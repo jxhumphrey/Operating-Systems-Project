@@ -9,8 +9,8 @@ public class ReactWater {
     private LinkedList<Condition2> hydrogen;
     private LinkedList<Condition2> oxygen;
     
-    public ReactWater(){
-        this.lock = new Lock();
+    public ReactWater(Lock lock){
+        this.lock = lock;
         hydrogen = new LinkedList<>();
         oxygen = new LinkedList<>();
     }
@@ -53,6 +53,25 @@ public class ReactWater {
     }
     
     public static void selfTest(){
+        System.out.println("--------------Testing ReactWater------------------");
         
+        final Lock lock = new Lock();
+		final ReactWater react = new ReactWater(lock);
+
+		KThread water1 = new KThread(new Runnable(){
+
+            public void run(){
+                lock.acquire();
+                System.out.println("Test Case 1: 1 Hydrogen Atom");
+                react.hReady();    
+                //System.out.println("Test Case 1: Water shouldn't have been made because we only have " + react.hydroCount + " hydrogen atoms and " + react.oxyCount + " oxygen atoms."); 
+				System.out.println("Test Case 1: Complete");
+				lock.release();
+				
+        } } ).setName("Test 1");
+		water1.fork();
+        water1.join();
+
+        System.out.println("-----------Testing ReactWater Complete------------");
     }
 }
