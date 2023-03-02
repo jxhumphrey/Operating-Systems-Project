@@ -92,94 +92,113 @@ public class Condition2 {
         System.out.println("Three tests will be performed one for each of the methods in condtion2");
         System.out.println("These methods are: sleep(), wake() and wakeAll()\n");
 
-        //Variables for testing functions
+
         final Lock lock = new Lock();
-        final Condition2 con2 = new Condition2(lock);
-      
-        KThread sleep = new KThread(new Runnable(){
+        final Condition2 condtion2Test = new Condition2(lock);
+        
+        // Thread for testing sleep()
+        KThread sleepTestThread = new KThread(new Runnable(){
             
-            //Test 1: Sleep
             public void run(){
             
-            //get the Lock
-            lock.acquire();
-            
-            System.out.println("sleep() test: Test starting"); 
-            System.out.println("sleep() test: sleep() is being called and thread is going to sleep\n");
-            
-            con2.sleep();
-            System.out.println("sleep() test: Test was successful, thread has been woken up.\n");
-            
-            lock.release();
+                lock.acquire();
+                
+                System.out.println("sleep() test: Test starting"); 
+                System.out.println("sleep() test: sleep() is being called and thread is going to sleep\n");
+                
+                condtion2Test.sleep();
+                System.out.println("sleep() test: Test was successful, thread has been woken up.\n");
+                
+                lock.release();
             }
       
         });
    
-        sleep.fork();
-      
-        KThread wake = new KThread(new Runnable()
-        {
-            //Test 2: Wake
+        sleepTestThread.fork();
+        
+        // Thread for testing wake()
+        KThread wakeTestThread = new KThread(new Runnable(){
+
             public void run(){
                 
                 lock.acquire();
+                
                 System.out.println("wake() test: Test starting"); 
                 System.out.println("wake() test: wake() is being called and thread from sleep() test is being woken up");
-                con2.wake();      
+                
+                condtion2Test.wake();      
+                
                 System.out.println("wake() test: Test was successful, thread from sleep() test has been woken up.\n");
+                
                 lock.release();
 
-            } } );
+            }
+        });
      
-        wake.fork();
+        wakeTestThread.fork();
        
-        sleep.join();
+        sleepTestThread.join();
       
         System.out.println("\nwakeAll() test: Test starting\n");
-       
-        KThread sleep1 = new KThread(new Runnable(){
-            //Test 3: Wake All sleeping thread 1
+        
+        // First thread for testing wakeAll()
+        KThread testThread1 = new KThread(new Runnable(){
+
             public void run(){
 
                 lock.acquire();
-                System.out.println("wakeAll() test: Thread 1 going to sleep");
-                con2.sleep();      
+
+                System.out.println("wakeAll() test: sleep() is being called and Thread 1 is going to sleep");
+                
+                condtion2Test.sleep();      
+                
                 System.out.println("wakeAll() test: Thread 1 has been woken up");
+                
                 lock.release();
-            } } );
+            }
+        });
        
-        sleep1.fork();
-       
-        KThread sleep2 = new KThread(new Runnable(){
-            //Test 3: Wake All sleeping thead 2
+        testThread1.fork();
+        
+        // Second thread for testing wakeAll
+        KThread testThread2 = new KThread(new Runnable(){
+
             public void run(){
 
                 lock.acquire();
-                System.out.println("wakeAll() test: Thread 2 going to sleep\n");
-                con2.sleep();      
-                System.out.println("wakeAll() test: Thread 2 has been woken up");
 
+                System.out.println("wakeAll() test: sleep() is being called and Thread 2 is going to sleep\n");
+                
+                condtion2Test.sleep();      
+               
+                System.out.println("wakeAll() test: Thread 2 has been woken up"); 
                 System.out.println("wakeAll() test: Test was successful, Thread 1 and Thread 2 are awake");
+                
                 lock.release();
 
-            } } );
+            }
+        });
 
-       sleep2.fork();
-       
-        KThread wakeall = new KThread(new Runnable(){
-            //Test 3: Wake all
+        testThread2.fork();
+        
+        // Thread calls wakeAll()
+        KThread wakeAllTestThread = new KThread(new Runnable(){
 
             public void run(){
+
                 lock.acquire();
+
                 System.out.println("wakeAll() test: wakeAll() is called");  
 
-                con2.wakeAll();    
+                condtion2Test.wakeAll();    
+
                 lock.release();
-            } } );
+            }
+        });
      
-       wakeall.fork();
+       wakeAllTestThread.fork();
        
-       wakeall.join();
+       wakeAllTestThread.join();
 
        System.out.println("------------Testing Condition2 End ----------------\n");
    }
