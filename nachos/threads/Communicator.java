@@ -95,4 +95,8 @@ public class Communicator {
         lock.release();
         return word;
     }
+    
+    public static void selfTest(){
+        
+    }
 }

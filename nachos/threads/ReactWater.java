@@ -51,4 +51,8 @@ public class ReactWater {
         System.out.println("Water was made!!");
         lock.release();
     }
+    
+    public static void selfTest(){
+        
+    }
 }
