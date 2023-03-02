@@ -137,7 +137,7 @@ public class Condition2 {
       } } );
      
        wake.fork();
-       //sleep.join();
+       sleep.join();
 
        System.out.println("\nTEST 3: SLEEP AND WAKEALL");
        KThread sleep1 =	new KThread(new Runnable()

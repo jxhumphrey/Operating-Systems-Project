@@ -287,6 +287,7 @@ public class KThread {
      * call is not guaranteed to return. This thread must not be the current
      * thread.
      */
+    
     public void join() {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
 	//Lib.assertTrue(this != currentThread);
