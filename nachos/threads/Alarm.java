@@ -31,7 +31,7 @@ public class Alarm {
      */
     public void timerInterrupt() {
 	KThread.currentThread().yield();
-        if(waitQueue.peek() != null)
+        if(waitQueue.peek() != null && waitQueue.peek().getWakeTime() > Machine.timer().getTime())
             waitQueue.remove().getThread().ready();
     }
 
