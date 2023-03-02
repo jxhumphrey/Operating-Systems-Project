@@ -1,12 +1,15 @@
 package nachos.threads;
 
 import nachos.machine.*;
+import java.util.PriorityQueue;
 
 /**
  * Uses the hardware timer to provide preemption, and to allow threads to sleep
  * until a certain time.
  */
 public class Alarm {
+    private PriorityQueue<SleepingThread> waitQueue = new PriorityQueue<>();
+    
     /**
      * Allocate a new Alarm. Set the machine's timer interrupt handler to this
      * alarm's callback.
@@ -28,6 +31,8 @@ public class Alarm {
      */
     public void timerInterrupt() {
 	KThread.currentThread().yield();
+        if(waitQueue.peek() != null)
+            waitQueue.remove().getThread().ready();
     }
 
     /**
@@ -46,8 +51,22 @@ public class Alarm {
      */
     public void waitUntil(long x) {
 	// for now, cheat just to get something working (busy waiting is bad)
-	long wakeTime = Machine.timer().getTime() + x;
-	while (wakeTime > Machine.timer().getTime())
-	    KThread.yield();
+//	long wakeTime = Machine.timer().getTime() + x;
+//	while (wakeTime > Machine.timer().getTime())
+//	    KThread.yield();
+        Machine.interrupt().disable();
+        long wakeTime = Machine.timer().getTime() + x;
+        KThread.sleep();
+        SleepingThread sleepingThread = new SleepingThread(KThread.currentThread(), wakeTime);
+        waitQueue.add(sleepingThread);
+        Machine.interrupt().enable();
+    }
+    
+    public static void selfTest() {
+        System.out.println("--------------Testing Alarm------------------");
+        
+        
+        
+        System.out.println("-----------Testing Alarm Complete------------");
     }
 }
