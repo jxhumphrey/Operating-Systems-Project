@@ -293,7 +293,7 @@ public class KThread {
 
         Machine.interrupt().disable();
         
-        if ( this == currentThread || status != statusFinished ) {
+        if (this == currentThread || status != statusFinished ) {
             Machine.interrupt().enable();
             throw new AssertionError();
         } else {
