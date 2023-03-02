@@ -1,5 +1,5 @@
 package nachos.threads;
-
+import java.util.LinkedList;
 import nachos.machine.*;
 
 /**
@@ -25,7 +25,6 @@ public class Condition2 {
 	this.conditionLock = conditionLock;
 
     waitQueue = new LinkedList<KThread>();
-
     }
 
     /**
@@ -44,7 +43,7 @@ public class Condition2 {
 
     waitQueue.add(KThread.currentThread());
 
-    KThread.currentThread().sleep();
+        KThread.sleep();
 
 	conditionLock.acquire();
 
@@ -59,13 +58,14 @@ public class Condition2 {
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 
-    boolean startingStatus = Machine.interrupt().disable();
+        boolean startingStatus = Machine.interrupt().disable();
 
+    
     if (waitQueue.size()!=0){
 
 			(waitQueue.removeFirst()).ready();
 	}
-		
+	
 	Machine.interrupt().restore(startingStatus);
 
 
@@ -81,13 +81,31 @@ public class Condition2 {
 
     boolean startingStatus = Machine.interrupt().disable();
 
+    
+
+
     while (waitQueue.size()!=0){
 
 			wake();
 	}
-		
+	
+
 	Machine.interrupt().restore(startingStatus);
     }
 
+
+    
+    public static void selfTest(){ 
+
+       System.out.println("--------------Testing Condition 2 ------------------");
+    }
+
+
     private Lock conditionLock;
+	private LinkedList<KThread> waitQueue;
+    
+    public static void main(String[] args) {
+        Condition2.selfTest();
+    }
 }
+
