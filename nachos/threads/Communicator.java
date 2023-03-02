@@ -24,7 +24,7 @@ public class Communicator {
         this.speakers = new LinkedList<>();
     }
     
-    public class thread {
+    private class thread {
         private Condition2 cond;
         private int word;
         
@@ -94,5 +94,9 @@ public class Communicator {
         listeners.removeFirst();
         lock.release();
         return word;
+    }
+    
+    public static void selfTest(){
+        
     }
 }

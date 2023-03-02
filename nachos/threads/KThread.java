@@ -294,6 +294,7 @@ public class KThread {
      * call is not guaranteed to return. This thread must not be the current
      * thread.
      */
+    
     public void join() {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
 	Lib.assertTrue(this != currentThread);
@@ -447,6 +448,7 @@ public class KThread {
      * Tests whether this module is working.
      */
     public static void selfTest() {
+    
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
         new KThread(new PingTest(1)).setName("forked thread").fork();

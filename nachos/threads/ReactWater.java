@@ -1,39 +1,58 @@
 package nachos.threads;
 
 import nachos.machine.*;
+import java.util.LinkedList;
 
-public class ReactWater{
-
-    /** 
-     *   Constructor of ReactWater
-     **/
-    public ReactWater() {
-
-    } // end of ReactWater()
-
-    /** 
-     *   When H element comes, if there already exist another H element 
-     *   and an O element, then call the method of Makewater(). Or let 
-     *   H element wait in line. 
-     **/ 
-    public void hReady() {
+public class ReactWater {
     
-    } // end of hReady()
- 
-    /** 
-     *   When O element comes, if there already exist another two H
-     *   elements, then call the method of Makewater(). Or let O element
-     *   wait in line. 
-     **/ 
-    public void oReady() {
-
-    } // end of oReady()
+    private Lock lock;
+    private LinkedList<Condition2> hydrogen;
+    private LinkedList<Condition2> oxygen;
     
-    /** 
-     *   Print out the message of "water was made!".
-     **/
-    public void Makewater() {
-
-    } // end of Makewater()
-
-} // end of class ReactWater
+    public ReactWater(){
+        this.lock = new Lock();
+        hydrogen = new LinkedList<>();
+        oxygen = new LinkedList<>();
+    }
+    
+    public void hReady(){
+        lock.acquire();
+        if (oxygen.isEmpty() || hydrogen.isEmpty()){
+            hydrogen.addFirst(new Condition2(lock));
+            hydrogen.getFirst().sleep();
+        
+        } else {
+            oxygen.getFirst().wake();
+            hydrogen.getFirst().wake();
+            this.MakeWater();
+        }
+        lock.release();
+    }
+    
+    public void oReady(){
+        lock.acquire();
+        if (hydrogen.size() < 2){
+            oxygen.addFirst(new Condition2(lock));
+            oxygen.getFirst().sleep();
+        
+        } else{
+            hydrogen.getFirst().wake();
+            hydrogen.getFirst().wake();
+            this.MakeWater();
+        }
+        lock.release();
+    }
+    
+    private void MakeWater(){
+        lock.acquire();
+        oxygen.removeFirst();
+        hydrogen.removeFirst();
+        hydrogen.removeFirst();
+        System.out.println("Water was made!!");
+        lock.release();
+    }
+    
+    public static void selfTest(){
+        
+    }
+}
