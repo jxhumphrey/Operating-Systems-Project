@@ -51,6 +51,8 @@ public class ThreadedKernel extends Kernel {
 	SynchList.selfTest();
     // made change here 
     Condition2.selfTest();
+    Communicator.selfTest();
+    ReactWater.selfTest();
 	if (Machine.bank() != null) {
 	    ElevatorBank.selfTest();
 	}
