@@ -31,13 +31,10 @@ public class Alarm {
      */
     public void timerInterrupt() {
         Machine.interrupt().disable();
-        System.out.println("6");
-//        if(waitQueue.peek() != null && waitQueue.peek().getWakeTime() > Machine.timer().getTime())
-//            waitQueue.remove().getThread().ready();
-        System.out.println("7");
+        while(!waitQueue.isEmpty() && waitQueue.peek().getWakeTime() <= Machine.timer().getTime())
+            waitQueue.remove().getThread().ready();
         Machine.interrupt().enable();
 	KThread.currentThread().yield();
-        System.out.println("8");
     }
 
     /**
@@ -50,26 +47,47 @@ public class Alarm {
      * (current time) >= (WaitUntil called time)+(x)
      * </blockquote>
      *
-     * @param	x	the minimum number of clock ticks to wait.
+     * @param	waitTime	the minimum number of clock ticks to wait.
      *
      * @see	nachos.machine.Timer#getTime()
      */
-    public void waitUntil(long x) {
+    public void waitUntil(long waitTime) {
 	// for now, cheat just to get something working (busy waiting is bad)
 //	long wakeTime = Machine.timer().getTime() + x;
 //	while (wakeTime > Machine.timer().getTime())
 //	    KThread.yield();
-        System.out.println("1");
         Machine.interrupt().disable();
-        System.out.println("2");
-        long wakeTime = Machine.timer().getTime() + x;
-        System.out.println("3");
+        long wakeTime = Machine.timer().getTime() + waitTime;
         SleepingThread sleepingThread = new SleepingThread(KThread.currentThread(), wakeTime);
         waitQueue.add(sleepingThread);
-        System.out.println("4");
-        System.out.println("5");
         KThread.sleep();
         Machine.interrupt().enable();
+    }
+    
+    private class SleepingThread implements Comparable<SleepingThread> {
+
+        KThread thread;
+        long wakeTime;
+
+        public SleepingThread(KThread thread, long wakeTime) {
+            this.thread = thread;
+            this.wakeTime = wakeTime;
+        }
+
+        public KThread getThread() {
+            return thread;
+        }
+
+        public long getWakeTime() {
+            return wakeTime;
+        }
+
+        @Override
+        public int compareTo(SleepingThread o) {
+            long x = this.getWakeTime();
+            long y = o.getWakeTime();
+            return (x < y) ? -1 : ((x == y) ? 0 : 1);
+        }
     }
     
     public static void selfTest() {
@@ -77,14 +95,20 @@ public class Alarm {
         final Alarm TestAlarm = new Alarm();
         System.out.println("Creating test thread..."); 
         KThread TestThread = new KThread();
+        TestThread.setName("Test Thread 1");
         TestThread.setTarget(new Runnable(){
             public void run(){
-                System.out.println("Sleeping test thread (" + TestThread.getName() + ") for 100 ticks until (" +  (Machine.timer().getTime() + 100)
-                        + ")\n\tCurrent time: " + Machine.timer().getTime()); 
-                TestAlarm.waitUntil(100);
-                System.out.println("0");
-                TestAlarm.timerInterrupt();
-                System.out.println("\tCurrent time: " + Machine.timer().getTime());
+                long waitTime = 1;
+                System.out.println("Sleeping [" + TestThread.getName() + "]for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
+                        + "]\n\tStarting at current time: " + Machine.timer().getTime()); 
+                TestAlarm.waitUntil(waitTime);
+                System.out.println("\tFinishing at current time: " + Machine.timer().getTime());
+                
+                 waitTime = 2000;
+                System.out.println("Sleeping [" + TestThread.getName() + "]for " + waitTime + " ticks until at least [" + (Machine.timer().getTime() + waitTime)
+                        + "]\n\tStarting at current time: " + Machine.timer().getTime());
+                TestAlarm.waitUntil(waitTime);
+                System.out.println("\tFinishing at current time: " + Machine.timer().getTime());
                 
             }
         });

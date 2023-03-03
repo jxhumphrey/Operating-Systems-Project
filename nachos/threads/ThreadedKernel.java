@@ -52,7 +52,7 @@ public class ThreadedKernel extends Kernel {
 
         // made change here 
         Condition2.selfTest();
-        //Alarm.selfTest();
+        Alarm.selfTest();
         Communicator.selfTest();
         ReactWater.selfTest();
 	if (Machine.bank() != null) {
