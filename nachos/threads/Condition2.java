@@ -88,7 +88,7 @@ public class Condition2 {
     
     public static void selfTest(){ 
 
-        System.out.println("\n------------Testing Condition2 Start ----------------");
+        System.out.println("\n------------Testing Condition2 Start ----------------\n");
         System.out.println("Three tests will be performed one for each of the methods in condtion2");
         System.out.println("These methods are: sleep(), wake() and wakeAll()\n");
 
@@ -200,7 +200,7 @@ public class Condition2 {
        
        wakeAllTestThread.join();
 
-       System.out.println("------------Testing Condition2 End ----------------\n");
+       System.out.println("\n------------Testing Condition2 End ----------------\n");
    }
 
 
