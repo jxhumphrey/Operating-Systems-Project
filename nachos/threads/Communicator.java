@@ -107,7 +107,7 @@ public class Communicator {
         KThread speakTest = new KThread(new Runnable(){
             
             public void run(){
-                for (int i = 0; i < 5; i++){
+                for (int i = 0; i < 7; i++){
                     com.speak(i);
                 }
             }
@@ -117,8 +117,8 @@ public class Communicator {
         KThread listenTest = new KThread(new Runnable(){
             
             public void run(){
-                for (int i = 0; i < 5; i++){
-                    System.out.println(com.listen());
+                for (int i = 0; i < 7; i++){
+                    System.out.println("Message recieved: " + com.listen());
                 }
             }
       
