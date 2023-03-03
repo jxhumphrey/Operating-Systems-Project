@@ -448,9 +448,10 @@ public class KThread {
      * Tests whether this module is working.
      */
     public static void selfTest() {
-    
+        System.out.println("-------------- Testing KThread --------------------");
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
+        //Default
         new KThread(new PingTest(1)).setName("forked thread").fork();
         new PingTest(0).run();
         
@@ -458,15 +459,13 @@ public class KThread {
         
         //Version 1: Non-join
         KThread thread1 = new KThread(new TestThread());
-        KThread thread2 = new KThread(new TestThread());
+        TestThread thread2 = new TestThread();
         
         thread1.setName("T1");
-        thread2.setName("T2");
         
         try {
-           //System.out.println("Non-join Version");
            thread1.fork();
-           thread2.fork();
+           thread2.run();
         } catch (Exception e) {
             Lib.debug('t', e.getMessage());
         }
@@ -474,7 +473,7 @@ public class KThread {
         //Version 2: Join
         KThread thread3 = new KThread(new TestThread());
         KThread thread4 = new KThread(new TestThread());
-//        
+        
         thread3.setName("T3");
         thread4.setName("T4");
         
@@ -499,6 +498,8 @@ public class KThread {
         //General Test Case 2: If thread is finished, nothing should happen
             
         //General Test Case 3: waiting threads are woken up by the caller
+        
+        //fork multiple threads, then join on the last one
     }
 
     private static final char dbgThread = 't';
