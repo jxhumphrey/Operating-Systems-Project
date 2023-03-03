@@ -64,6 +64,13 @@ public class Alarm {
         Machine.interrupt().enable();
     }
     
+    public void waitUntilBusy(long x) {
+	// for now, cheat just to get something working (busy waiting is bad)
+	long wakeTime = Machine.timer().getTime() + x;
+	while (wakeTime > Machine.timer().getTime())
+	    KThread.yield();
+    }
+    
     private class SleepingThread implements Comparable<SleepingThread> {
 
         KThread thread;
@@ -93,28 +100,121 @@ public class Alarm {
     public static void selfTest() {
         System.out.println("--------------Testing Alarm------------------");
         final Alarm TestAlarm = new Alarm();
-        System.out.println("Creating test thread..."); 
+        System.out.println("Creating test thread, thread will wait for 0 then 2000 ticks, finish time should always be larger than start time + wait time."); 
         KThread TestThread = new KThread();
-        TestThread.setName("Test Thread 1");
+        TestThread.setName("Test Thread 0");
         TestThread.setTarget(new Runnable(){
             public void run(){
-                long waitTime = 1;
-                System.out.println("Sleeping [" + TestThread.getName() + "]for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
+                long waitTime = 0;
+                System.out.println("Sleeping [" + TestThread.getName() + "] for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
                         + "]\n\tStarting at current time: " + Machine.timer().getTime()); 
                 TestAlarm.waitUntil(waitTime);
                 System.out.println("\tFinishing at current time: " + Machine.timer().getTime());
                 
-                 waitTime = 2000;
-                System.out.println("Sleeping [" + TestThread.getName() + "]for " + waitTime + " ticks until at least [" + (Machine.timer().getTime() + waitTime)
+                waitTime = 2000;
+                System.out.println("Sleeping [" + TestThread.getName() + "] for " + waitTime + " ticks until at least [" + (Machine.timer().getTime() + waitTime)
                         + "]\n\tStarting at current time: " + Machine.timer().getTime());
                 TestAlarm.waitUntil(waitTime);
-                System.out.println("\tFinishing at current time: " + Machine.timer().getTime());
-                
+                System.out.println("\tFinishing [" + TestThread.getName() + "] at current time: " + Machine.timer().getTime());
             }
         });
+        
         TestThread.fork();
         TestThread.join();
         
+        System.out.println("\nCreating test thread, thread will wait for -100 ticks, thread should wake at any time after."); 
+        KThread TestThread4 = new KThread();
+        TestThread4.setName("Test Thread 4");
+        TestThread4.setTarget(new Runnable(){
+            public void run(){
+                long waitTime = -100;
+                System.out.println("Sleeping [" + TestThread4.getName() + "] for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
+                        + "]\n\tStarting at current time: " + Machine.timer().getTime()); 
+                TestAlarm.waitUntil(waitTime);
+                System.out.println("Finishing [" + TestThread4.getName() + "] at current time: " + Machine.timer().getTime());
+            }
+        });
+        TestThread4.fork();
+        TestThread4.join();
+        
+        System.out.println("\nCreating 3 test threads and sleeping them simultaneously, threads should successfully wake and in reverse order."); 
+        KThread TestThread1 = new KThread();
+        TestThread1.setName("Test Thread 1");
+        TestThread1.setTarget(new Runnable(){
+            public void run(){
+                long waitTime = 3000;
+                System.out.println("Sleeping [" + TestThread1.getName() + "] for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
+                        + "]\n\tStarting at current time: " + Machine.timer().getTime()); 
+                TestAlarm.waitUntil(waitTime);
+                System.out.println("Finishing [" + TestThread1.getName() + "] at current time: " + Machine.timer().getTime());
+            }
+        });
+        
+        KThread TestThread2 = new KThread();
+        TestThread2.setName("Test Thread 2");
+        TestThread2.setTarget(new Runnable(){
+            public void run(){
+                long waitTime = 2000;
+                System.out.println("Sleeping [" + TestThread2.getName() + "] for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
+                        + "]\n\tStarting at current time: " + Machine.timer().getTime()); 
+                TestAlarm.waitUntil(waitTime);
+                System.out.println("Finishing [" + TestThread2.getName() + "] at current time: " + Machine.timer().getTime());
+            }
+        });
+        
+        KThread TestThread3 = new KThread();
+        TestThread3.setName("Test Thread 3");
+        TestThread3.setTarget(new Runnable(){
+            public void run(){
+                long waitTime = 1000;
+                System.out.println("Sleeping [" + TestThread3.getName() + "] for " + waitTime + " ticks until at least [" +  (Machine.timer().getTime() + waitTime)
+                        + "]\n\tStarting at current time: " + Machine.timer().getTime()); 
+                TestAlarm.waitUntil(waitTime);
+                System.out.println("Finishing [" + TestThread3.getName() + "] at current time: " + Machine.timer().getTime());
+            }
+        });
+        
+        TestThread1.fork();
+        TestThread2.fork();
+        TestThread3.fork();
+        TestThread1.join();
+        
+        int numThreads = 1000;
+        System.out.println("\nCreating " + numThreads + " test threads and sleeping them simultaneously, using blocking.");
+        KThread[] TestThreads = new KThread[numThreads];
+        long x = Machine.timer().getTime();
+        for(int i=0; i<numThreads; ++i){
+            TestThreads[i] = new KThread();
+            TestThreads[i].setTarget(new Runnable(){
+                public void run(){
+                    long waitTime = 1000;
+                    TestAlarm.waitUntil(waitTime);
+                }
+            });
+        }
+        for(int i=0; i<numThreads; ++i)
+            TestThreads[i].fork();
+        for(int i=0; i<numThreads; ++i)
+            TestThreads[i].join();
+        System.out.println("Time to complete: " + (Machine.timer().getTime() - x));
+        
+        System.out.println("\nCreating " + numThreads + " test threads and sleeping them simultaneously, using busy waiting.");
+        KThread[] TestThreads2 = new KThread[numThreads];
+        x = Machine.timer().getTime();
+        for(int i=0; i<numThreads; ++i){
+            TestThreads2[i] = new KThread();
+            TestThreads2[i].setTarget(new Runnable(){
+                public void run(){
+                    long waitTime = 1000;
+                    TestAlarm.waitUntilBusy(waitTime);
+                }
+            });
+        }
+        for(int i=0; i<numThreads; ++i)
+            TestThreads2[i].fork();
+        for(int i=0; i<numThreads; ++i)
+            TestThreads2[i].join();
+        System.out.println("Time to complete: " + (Machine.timer().getTime() - x));
         System.out.println("-----------Testing Alarm Complete------------\n");
     }
 }
