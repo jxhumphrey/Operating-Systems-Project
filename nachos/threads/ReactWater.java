@@ -2,82 +2,56 @@ package nachos.threads;
 
 import nachos.machine.*;
 import java.util.LinkedList;
-public class ReactWater{
-
+public class ReactWater {
     
-	//private LinkedList<KThread> hydrogen;
-	//private LinkedList<KThread> oxygen;
+    private Lock lock;
     private LinkedList<Condition2> hydrogen;
     private LinkedList<Condition2> oxygen;
-	private Lock lock;
-	
+    
     public ReactWater(Lock lock){
-
-		this.lock = lock;
-        hydrogen = new LinkedList<Condition2>();
-        oxygen = new LinkedList<Condition2>();
-
-    } 
-
-    public void hReady() {
-        
-		lock.acquire();
-        System.out.println("Test3");
-		//hydrogen.add(KThread.currentThread());
-        //makeWater();
+        this.lock = lock;
+        hydrogen = new LinkedList<>();
+        oxygen = new LinkedList<>();
+    }
+    
+    public void hReady(){
+        lock.acquire();
         if (oxygen.isEmpty() || hydrogen.isEmpty()){
             hydrogen.addFirst(new Condition2(lock));
             hydrogen.getFirst().sleep();
         
         } else {
-            hydrogen.addFirst(new Condition2(lock));
-            hydrogen.getFirst().sleep();
             oxygen.getFirst().wake();
             hydrogen.getFirst().wake();
-            hydrogen.getFirst().wake();
-            makeWater();
+            this.MakeWater();
         }
         lock.release();
-
     }
- 
-    public void oReady() {
-		lock.acquire();
-		//oxygen.add(KThread.currentThread());
-        //makeWater();
+    
+    public void oReady(){
+        lock.acquire();
         if (hydrogen.size() < 2){
             oxygen.addFirst(new Condition2(lock));
             oxygen.getFirst().sleep();
         
         } else{
-            oxygen.addFirst(new Condition2(lock));
-            oxygen.getFirst().sleep();
-            oxygen.getFirst().wake();
             hydrogen.getFirst().wake();
             hydrogen.getFirst().wake();
-            makeWater();
+            this.MakeWater();
         }
         lock.release();
-
-
-    } 
+    }
     
-    public void makeWater(){
+    private void MakeWater(){
+        lock.acquire();
+        oxygen.removeFirst();
+        hydrogen.removeFirst();
+        hydrogen.removeFirst();
+        System.out.println("Water was made!!");
+        lock.release();
+    }
 
-	
 
-		//while(oxygen.size() >= 1 &&  hydrogen.size() >= 2)
-		//{
-            lock.acquire();
-			System.out.println("Water was made!!");
-			hydrogen.removeFirst();
-			hydrogen.removeFirst();
-			oxygen.removeFirst();
-            lock.release();
-
-		//}
-
-    } 
 	public static void selfTest()
 	{
         System.out.println("-----------------------Testing ReactWater Start----------------------------\n");
@@ -89,10 +63,8 @@ public class ReactWater{
             public void run(){
                 selfTestLock.acquire();
                 System.out.println("Test 1: 1 Hydrogen Atom and 1 Oxygen Atom");
-                reaction.hReady(); 
-                System.out.println("Test1");
                 reaction.oReady();
-                System.out.println("Test 2");
+                reaction.hReady(); 
                 System.out.println("Test 1: Water wasn't made because there is only " + reaction.hydrogen.size() + " hydrogen atom and " + reaction.oxygen.size() + " oxygen atom."); 
 				System.out.println("Test 1: Complete\n");
 				selfTestLock.release();
