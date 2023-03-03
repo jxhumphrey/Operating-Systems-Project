@@ -47,21 +47,22 @@ public class ReactWater{
     } 
 	public static void selfTest()
 	{
-        System.out.println("-----------------------ReactWater Testing Start----------------------------");
+        System.out.println("-----------------------Testing ReactWater Start----------------------------\n");
 
-		final Lock testLock = new Lock();
-		final ReactWater react = new ReactWater(testLock);
+		final Lock selfTestLock = new Lock();
+		final ReactWater reaction = new ReactWater(selfTestLock);
+
 		KThread waterTest1 = new KThread(new Runnable(){
 
             public void run(){
-                testLock.acquire();
-                System.out.println("Test Case 1: 1 Hydrogen Atom and 1 Oxygen Atom");
-                react.hReady(); 
-                react.oReady();
+                selfTestLock.acquire();
+                System.out.println("Test 1: 1 Hydrogen Atom and 1 Oxygen Atom");
+                reaction.hReady(); 
+                reaction.oReady();
                  
-                System.out.println("Test Case 1: Water shouldn't have been made because we only have " + react.hydrogen.size() + " hydrogen atoms and " + react.oxygen.size() + " oxygen atoms."); 
-				System.out.println("Test Case 1: Complete");
-				testLock.release();
+                System.out.println("Test 1: Water wasn't made because there is only " + reaction.hydrogen.size() + " hydrogen atom and " + reaction.oxygen.size() + " oxygen atom."); 
+				System.out.println("Test 1: Complete\n");
+				selfTestLock.release();
 				
         }});
 		waterTest1.fork();
@@ -70,12 +71,12 @@ public class ReactWater{
 		KThread waterTest2 = new KThread(new Runnable(){
 
             public void run(){
-                testLock.acquire();
-                System.out.println("Test Case 2: 2 Hydrogen Atoms");
-                react.hReady();    
-                System.out.println("Test Case 2: Water shouldn't have been made because we only have " + react.hydrogen.size() + " hydrogen atoms and " + react.oxygen.size() + " oxygen atoms."); 
-				System.out.println("Test Case 2: Complete");
-				testLock.release();
+                selfTestLock.acquire();
+                System.out.println("Test 2: Add 1 hydrogen atom");
+                reaction.hReady();    
+                System.out.println("Test 2: Water should have been made with " + reaction.hydrogen.size() + " hydrogen atoms left over and " + reaction.oxygen.size() + " oxygen atoms left over."); 
+				System.out.println("Test 2: Complete\n");
+				selfTestLock.release();
 			}
         });
 		waterTest2.fork();
@@ -84,12 +85,15 @@ public class ReactWater{
 		KThread waterTest3 = new KThread(new Runnable(){
 
             public void run(){
-                testLock.acquire();
-                System.out.println("Test Case 3: 3 Hydrogen Atoms");
-                react.hReady();    
-                System.out.println("Test Case 3: Water shouldn't have been made because we only have " + react.hydrogen.size() + " hydrogen atoms and " + react.oxygen.size() + " oxygen atoms."); 
-				System.out.println("Test Case 3: Complete");
-				testLock.release();
+                selfTestLock.acquire();
+                System.out.println("Test 3: Add 4 Hydrogen Atoms");
+                reaction.hReady();  
+                reaction.hReady(); 
+                reaction.hReady(); 
+                reaction.hReady();   
+                System.out.println("Test 3: Water wasn't made because there is only " + reaction.hydrogen.size() + " hydrogen atom and " + reaction.oxygen.size() + " oxygen atom."); 
+				System.out.println("Test 3: Complete\n");
+				selfTestLock.release();
 			}
         });
 
@@ -100,20 +104,22 @@ public class ReactWater{
 		KThread waterTest4 = new KThread(new Runnable(){
 
             public void run(){
-                testLock.acquire();
-                System.out.println("Test Case 4: 3 Hydrogen Atoms, 1 Oxygen Atom");
-                react.oReady();    
-                System.out.println("Test Case 4: Water should have been made with " + react.hydrogen.size() + " hydrogen atoms and " + react.oxygen.size() + " oxygen atoms left over."); 
-				System.out.println("Test Case 4: Complete");
-				testLock.release();
+                selfTestLock.acquire();
+                System.out.println("Test 4: Add 2 Oxygen Atoms");
+                reaction.oReady();
+                reaction.oReady();    
+                System.out.println("Test 4: Water should have been made twice with " + reaction.hydrogen.size() + " hydrogen atoms and " + reaction.oxygen.size() + " oxygen atoms left over."); 
+				System.out.println("Test 4: Complete\n");
+				selfTestLock.release();
 			}
         });
-        
+
 		waterTest4.fork();
 		waterTest4.join();
-        System.out.println("-----------------------ReactWater Testing END----------------------------");
+
+        System.out.println("-----------------------Testing ReactWater  END----------------------------");
 
 		
 	}
 
-} // end of class ReactWater
+} 
