@@ -15,8 +15,8 @@ public class Communicator {
      * Allocate a new communicator.
      */
     private Lock lock;
-    private LinkedList<thread> listeners;
-    private LinkedList<thread> speakers;
+    private LinkedList<Thread> listeners;
+    private LinkedList<Thread> speakers;
     
     public Communicator() {
         this.lock = new Lock();
@@ -24,12 +24,12 @@ public class Communicator {
         this.speakers = new LinkedList<>();
     }
     
-    private class thread {
-        private Condition2 cond;
+    private class Thread {
+        private Condition cond;
         private int word;
         
-        public thread(Condition2 cond){
-            this.cond = cond;
+        public Thread(){
+            this.cond = new Condition(lock);
         }
         
         public int getWord(){
@@ -40,7 +40,7 @@ public class Communicator {
             this.word = word;
         }
         
-        public Condition2 getCondition(){
+        public Condition getCondition(){
             return cond;
         }
     }
@@ -57,11 +57,12 @@ public class Communicator {
      */
     public void speak(int word) {
         lock.acquire();
+        System.out.println("Speaker call");
         if (listeners.isEmpty()){
-            Condition2 cond = new Condition2(lock);
-            speakers.addFirst(new thread(cond));
-            speakers.getFirst().setWord(word);
-            speakers.getFirst().getCondition().sleep();
+            Thread speakerThread = new Thread();
+            speakerThread.setWord(word);
+            speakers.add(speakerThread);
+            speakerThread.getCondition().sleep();
             
         } else {
             listeners.getFirst().setWord(word);
@@ -79,24 +80,60 @@ public class Communicator {
      */    
     public int listen() {
         lock.acquire();
+        System.out.println("Listener call");
         int word;
         if (speakers.isEmpty()){
-            Condition2 cond = new Condition2(lock);
-            listeners.addFirst(new thread(cond));
-            listeners.getFirst().getCondition().sleep();
+            Thread listenerThread = new Thread();
+            listeners.add(listenerThread);
+            listenerThread.getCondition().sleep();
+            word = listenerThread.getWord();
             
         } else {
-            listeners.getFirst().setWord(speakers.getFirst().getWord());
             speakers.getFirst().getCondition().wake();
+            word = speakers.getFirst().getWord();
+            speakers.removeFirst();
         }
         
-        word = listeners.getFirst().getWord();
-        listeners.removeFirst();
         lock.release();
         return word;
     }
     
     public static void selfTest(){
         
+        Communicator com = new Communicator();
+        
+        System.out.println();
+        System.out.println("------------------Attempting test on communicator class------------------");
+        KThread speakTest = new KThread(new Runnable(){
+            
+            public void run(){
+                for (int i = 0; i < 5; i++){
+                    com.speak(i);
+                }
+            }
+      
+        });
+        
+        KThread listenTest = new KThread(new Runnable(){
+            
+            public void run(){
+                for (int i = 0; i < 5; i++){
+                    System.out.println(com.listen());
+                }
+            }
+      
+        });
+        speakTest.fork();
+        listenTest.fork();
+        
+        try {
+            speakTest.join();
+            listenTest.join();
+            
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        System.out.println("------------------Communicator class successfully passed------------------");
+        System.out.println();
     }
 }
