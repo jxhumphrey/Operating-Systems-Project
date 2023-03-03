@@ -30,9 +30,14 @@ public class Alarm {
      * that should be run.
      */
     public void timerInterrupt() {
+        Machine.interrupt().disable();
+        System.out.println("6");
+//        if(waitQueue.peek() != null && waitQueue.peek().getWakeTime() > Machine.timer().getTime())
+//            waitQueue.remove().getThread().ready();
+        System.out.println("7");
+        Machine.interrupt().enable();
 	KThread.currentThread().yield();
-        if(waitQueue.peek() != null && waitQueue.peek().getWakeTime() > Machine.timer().getTime())
-            waitQueue.remove().getThread().ready();
+        System.out.println("8");
     }
 
     /**
@@ -54,19 +59,38 @@ public class Alarm {
 //	long wakeTime = Machine.timer().getTime() + x;
 //	while (wakeTime > Machine.timer().getTime())
 //	    KThread.yield();
+        System.out.println("1");
         Machine.interrupt().disable();
+        System.out.println("2");
         long wakeTime = Machine.timer().getTime() + x;
-        KThread.sleep();
+        System.out.println("3");
         SleepingThread sleepingThread = new SleepingThread(KThread.currentThread(), wakeTime);
         waitQueue.add(sleepingThread);
+        System.out.println("4");
+        System.out.println("5");
+        KThread.sleep();
         Machine.interrupt().enable();
     }
     
     public static void selfTest() {
         System.out.println("--------------Testing Alarm------------------");
+        final Alarm TestAlarm = new Alarm();
+        System.out.println("Creating test thread..."); 
+        KThread TestThread = new KThread();
+        TestThread.setTarget(new Runnable(){
+            public void run(){
+                System.out.println("Sleeping test thread (" + TestThread.getName() + ") for 100 ticks until (" +  (Machine.timer().getTime() + 100)
+                        + ")\n\tCurrent time: " + Machine.timer().getTime()); 
+                TestAlarm.waitUntil(100);
+                System.out.println("0");
+                TestAlarm.timerInterrupt();
+                System.out.println("\tCurrent time: " + Machine.timer().getTime());
+                
+            }
+        });
+        TestThread.fork();
+        TestThread.join();
         
-        
-        
-        System.out.println("-----------Testing Alarm Complete------------");
+        System.out.println("-----------Testing Alarm Complete------------\n");
     }
 }

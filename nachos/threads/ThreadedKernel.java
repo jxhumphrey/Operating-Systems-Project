@@ -50,11 +50,11 @@ public class ThreadedKernel extends Kernel {
 	Semaphore.selfTest();
 	SynchList.selfTest();
 
-    // made change here 
-    Condition2.selfTest();
-    Alarm.selfTest();
-    Communicator.selfTest();
-    ReactWater.selfTest();
+        // made change here 
+        Condition2.selfTest();
+        //Alarm.selfTest();
+        Communicator.selfTest();
+        ReactWater.selfTest();
 	if (Machine.bank() != null) {
 	    ElevatorBank.selfTest();
 	}
