@@ -25,11 +25,11 @@ public class Communicator {
     }
     
     private class Thread {
-        private Condition cond;
+        private Condition2 cond;
         private int word;
         
         public Thread(){
-            this.cond = new Condition(lock);
+            this.cond = new Condition2(lock);
         }
         
         public int getWord(){
@@ -40,7 +40,7 @@ public class Communicator {
             this.word = word;
         }
         
-        public Condition getCondition(){
+        public Condition2 getCondition(){
             return cond;
         }
     }
@@ -104,6 +104,7 @@ public class Communicator {
         
         System.out.println();
         System.out.println("------------------Attempting test on communicator class------------------");
+        System.out.println();
         KThread speakTest = new KThread(new Runnable(){
             
             public void run(){
@@ -123,6 +124,7 @@ public class Communicator {
             }
       
         });
+        
         speakTest.fork();
         listenTest.fork();
         
@@ -133,6 +135,9 @@ public class Communicator {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+
+        
+        System.out.println();
         System.out.println("------------------Communicator class successfully passed------------------");
         System.out.println();
     }
