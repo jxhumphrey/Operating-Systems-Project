@@ -463,15 +463,20 @@ public class KThread {
         
         thread1.setName("T1");
         
+        long startTime = System.nanoTime();
+        
         try {
            thread1.fork();
            thread2.run();
            
-           //Evaluate performance
-           
         } catch (Exception e) {
             Lib.debug('t', e.getMessage());
         }
+        
+        //Performance
+        long endTime = System.nanoTime();
+        
+        System.out.println("Time Elapsed: " + (endTime - startTime)/1000000 + " milliseconds");
         
         //Version 2: Join
         KThread thread3 = new KThread(new TestThread());
@@ -480,17 +485,20 @@ public class KThread {
         thread3.setName("T3");
         thread4.setName("T4");
         
+        startTime = System.nanoTime();
         try {
             thread3.fork();
             thread3.join();
             //Thread3 finishes before Thread4 can execute
             thread4.fork();
             
-            //Evaluate performance
-            
         } catch (Exception e) {
             Lib.debug('t', e.getMessage());
         }
+        
+        endTime = System.nanoTime();
+        
+        System.out.println("Time Elapsed: " + (endTime - startTime)/1000000 + " milliseconds");
         
         //General Test Case 1: currentThread cannot join itself
         //Check is already provided --> Lib.assertTrue(this != currentThread)
@@ -524,6 +532,8 @@ public class KThread {
         } catch(Exception e) {
             Lib.debug('t', e.getMessage());
         }
+        
+        System.out.println("-------------- Testing KThread END-----------------");
     }
 
     private static final char dbgThread = 't';
