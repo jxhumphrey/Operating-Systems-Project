@@ -450,12 +450,12 @@ public class KThread {
     public static void selfTest() {
         System.out.println("-------------- Testing KThread --------------------");
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
-	
+        
         //Default
         new KThread(new PingTest(1)).setName("forked thread").fork();
         new PingTest(0).run();
         
-        //Performance Test Case
+        //Performance Test Case: Time Elapsed and CPU Time
         
         //Version 1: Non-join
         KThread thread1 = new KThread(new TestThread());
@@ -466,6 +466,9 @@ public class KThread {
         try {
            thread1.fork();
            thread2.run();
+           
+           //Evaluate performance
+           
         } catch (Exception e) {
             Lib.debug('t', e.getMessage());
         }
@@ -480,26 +483,47 @@ public class KThread {
         try {
             thread3.fork();
             thread3.join();
+            //Thread3 finishes before Thread4 can execute
             thread4.fork();
+            
+            //Evaluate performance
+            
         } catch (Exception e) {
             Lib.debug('t', e.getMessage());
         }
         
         //General Test Case 1: currentThread cannot join itself
-        //Causes an AssertionFailureError --> Lib.assertTrue(this != currentThread)
-//        try {
-//            new KThread(new TestThread()).fork();
-//            currentThread.join();
-//        } catch(Exception e) {
-//            System.out.println("A thread cannot join itself!");
-//        }
+        //Check is already provided --> Lib.assertTrue(this != currentThread)
+        //Throws an AssertionFailureError
         
-            
         //General Test Case 2: If thread is finished, nothing should happen
-            
-        //General Test Case 3: waiting threads are woken up by the caller
+        KThread threadFinish = new KThread(new TestThread());
+        threadFinish.setName("Finish");
         
-        //fork multiple threads, then join on the last one
+        try {
+            threadFinish.fork();
+            threadFinish.join();
+            //Thread "Finish" only runs once
+            threadFinish.join();    //This call does nothing
+        } catch(Exception e) {
+            Lib.debug('t', e.getMessage());
+        }
+            
+        //General Test Case 3: Waiting threads are woken up by the caller
+        
+        KThread thread5 = new KThread(new TestThread());
+        KThread thread6 = new KThread(new TestThread());
+        
+        thread5.setName("T5");
+        thread6.setName("T6");
+        
+        try {
+            thread5.fork();
+            thread6.fork();
+            thread5.join();
+        } catch(Exception e) {
+            Lib.debug('t', e.getMessage());
+        }
     }
 
     private static final char dbgThread = 't';
