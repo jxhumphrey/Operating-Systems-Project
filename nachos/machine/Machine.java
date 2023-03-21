@@ -98,7 +98,7 @@ public final class Machine {
 	System.out.print("Machine halting!\n\n");
 	stats.print();
 	terminate();
-    }
+    }   
 
     /**
      * Return an array containing all command line arguments.

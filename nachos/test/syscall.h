@@ -160,7 +160,7 @@ int open(char *name);
  * invalid, or if a network stream has been terminated by the remote host and
  * no more data is available.
  */
-int read(int fileDescriptor, void *buffer, int count);
+int read(int fileDescriptor, ivoid *buffer, int count);
 
 /**
  * Attempt to write up to count bytes from buffer to the file or stream
