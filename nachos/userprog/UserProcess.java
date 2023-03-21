@@ -6,6 +6,7 @@ import nachos.userprog.*;
 
 import java.io.EOFException;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -43,6 +44,10 @@ public class UserProcess {
 	pageTable = new TranslationEntry[numPhysPages];
 	for (int i=0; i<numPhysPages; i++)
 	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
+        //used in task 3, requires mutex
+        ++processCount;
+        ID = processCount;
+        parent = null;
     }
     
     /**
@@ -67,8 +72,9 @@ public class UserProcess {
     public boolean execute(String name, String[] args) {
 	if (!load(name, args))
 	    return false;
-	
-	new UThread(this).setName(name).fork();
+	//changed for join()
+	thread = (UThread)(new UThread(this).setName(name));
+        thread.fork();
 
 	return true;
     }
@@ -575,4 +581,98 @@ public class UserProcess {
 	
     private static final int pageSize = Processor.pageSize;
     private static final char dbgProcess = 'a';
+    
+    /**
+    Creates and executes a user program with specified arguments in a child 
+    process. The method accepts the name of the file that contains the 
+    executable, an integer for the number of arguments, and the arguments. 
+    It will return an integer for the child process’ ID.
+    */
+    private int exec(int vAddr, int argCount, int argv){
+        //check for invalid arguements
+        if(vAddr < 0 || argCount < 0 || argv < 0) return -1;
+        //get filename virtual address
+        String fileName = readVirtualMemoryString(vAddr, 256);
+        //check that filename is valid
+        if(fileName == null || !fileName.endsWith(".coff")) return -1;
+        //create string array to store arguements
+        String[] args = new String[argCount];
+        //iterate through arguements and place in local array
+        for(int i=0; i<argCount; ++i){
+            //create byte array of size 4
+            byte[] argB = new byte[4];
+            //check that argument virtual address is 4 bytes
+            if(readVirtualMemory(argv + i * 4, argB) != 4) return -1;
+            //reorder argument virtual memory address bytes into int
+            int argVAddr = Lib.bytesToInt(argB, 0);
+            //if argument memory address isn’t null, place it in args
+            if(readVirtualMemoryString(argv, 256) != null)
+                args[i] = readVirtualMemoryString(argv, 256);
+            else return -1;
+        }
+        //create child process to execute program
+        UserProcess child = UserProcess.newUserProcess();
+        if(!child.execute(fileName, args)) return -1;
+        //set child parent raltionships
+        child.parent = this;
+        this.children.add(child);
+        return child.ID;
+    }
+    
+    private int processCount = 0;
+    private int ID = 0;
+    private UserProcess parent;
+    private LinkedList<UserProcess> children = new LinkedList<UserProcess>();
+    
+    /**
+    Joins two processes (parent and child). The calling process waits until a 
+    specified child process completes execution before continuing its own 
+    execution. It accepts two arguments, an integer for the child process ID, 
+    and an integer for the exit status of that child process. It will return an 
+    integer according to the child process’ exit ID.
+    */
+    private int join(int processID, int status){
+        //check arguements are valid
+        if(processID < 0 || !children.contains(processID) || status < 0) 
+            return -1;
+        //get child process with ID == processID
+        UserProcess child = null;
+        for(int i = 0; i < children.size(); ++i){
+            if(children.get(i).ID == processID) {
+                child = children.get(i);
+                break;
+            }
+        }
+        //check if child process is null
+        if(child == null) return -1;
+        //join child and destroy parent/child relationship
+        child.thread.join();
+        child.parent = null;
+        children.remove(processID);
+        //store child process exit status at status virtual memory address
+        byte[] exitStatus = Lib.bytesFromInt(child.exitStatus);
+        if(writeVirtualMemory(status, exitStatus) == 4)
+            return 1;
+        else
+            return 0;
+    }
+    
+    private UThread thread;
+    private int exitStatus = 0;
+    
+    private int exit(int status){
+        //set exitStatus, unload sections, decrement processCount
+        exitStatus = status;
+        unloadSections();
+        --processCount;
+        //set every child process parent to null and remove from children list
+        for(UserProcess child : children){
+            child.parent = null;
+            children.remove(child);
+        }
+        //if last process, halt machine, otherwise, finish thread
+        if(processCount == 0) Machine.halt();
+        else UThread.finish();
+        return 0;
+    }
 }
