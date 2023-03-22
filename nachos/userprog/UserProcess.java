@@ -7,6 +7,7 @@ import nachos.userprog.*;
 import java.io.EOFException;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.HashSet;
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -38,8 +39,8 @@ public class UserProcess {
 	for (int i=0; i<numPhysPages; i++)
 	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
         
-        //Used in task 1 and 3, requires mutex
-        processID = processCount;
+        //used in task 3, requires mutex
+        ID = processCount;
         Machine.interrupt().disable();
         processLock.acquire();
         processCount++;
@@ -359,7 +360,7 @@ public class UserProcess {
      * Handle the halt() system call. 
      */
     private int handleHalt() {
-        if(processID != 0) {
+        if(ID != 0) {
             Machine.halt();
             Lib.assertNotReached("Machine.halt() did not halt machine!");
             return 0;
@@ -507,7 +508,7 @@ public class UserProcess {
 	switch (syscall) {
 	case syscallHalt:
 	    return handleHalt();
-
+        
 
 	default:
 	    Lib.debug(dbgProcess, "Unknown syscall " + syscall);
@@ -545,6 +546,18 @@ public class UserProcess {
 	    Lib.assertNotReached("Unexpected exception");
 	}
     }
+    
+    //TASK 2.1
+    private static int MAX_STRING_LENGTH = 256;
+    private static final int INPUT = 0;
+    private static final int  OUTPUT = 1;
+    private final int MAX_FILES = 18;
+    private OpenFile[] fileList;
+    private int[] filePosList;
+    private int[] fileDescriptorList;
+    private HashSet<String> filesToBeDeleted;
+    Lock processLock;
+    // TASK 2.1
 
     /** The program being run by this process. */
     protected Coff coff;
@@ -614,6 +627,7 @@ public class UserProcess {
     // TASK 2.1
     
     private int processCount = 0;
+    private int ID;
     private UserProcess parent;
     private LinkedList<UserProcess> children = new LinkedList<UserProcess>();
     
