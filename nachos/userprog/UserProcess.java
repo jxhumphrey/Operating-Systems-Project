@@ -6,6 +6,7 @@ import nachos.userprog.*;
 
 import java.io.EOFException;
 import java.util.LinkedList;
+import java.util.HashSet;
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -24,13 +25,26 @@ public class UserProcess {
      * Allocate a new process.
      */
     public UserProcess() {
+        //TASK 2.1
+        processLock = new Lock();
+        fileList = new OpenFile[MAX_FILES];
+        filesToBeDeleted = new HashSet<String>();
+        fileList[INPUT] = UserKernel.console.openForReading();
+        fileList[OUTPUT] = UserKernel.console.openForWriting();
+        //TASK 2.1
+        
 	int numPhysPages = Machine.processor().getNumPhysPages();
 	pageTable = new TranslationEntry[numPhysPages];
 	for (int i=0; i<numPhysPages; i++)
 	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
+        
         //used in task 3, requires mutex
-        ++processCount;
         ID = processCount;
+        Machine.interrupt().disable();
+        processLock.acquire();
+        processCount++;
+        processLock.release();
+        Machine.interrupt().enable();
         parent = null;
     }
     
@@ -345,13 +359,109 @@ public class UserProcess {
      * Handle the halt() system call. 
      */
     private int handleHalt() {
-
-	Machine.halt();
-	
-	Lib.assertNotReached("Machine.halt() did not halt machine!");
+        if(ID != 0) {
+            Machine.halt();
+            Lib.assertNotReached("Machine.halt() did not halt machine!");
+            return 0;
+        } else
+            return -1;
+    }
+    
+    private int getNextFileDescriptor() {
+        for(int i = 2; i < fileList.length; i++)
+		if (fileList[i] == null)
+			return i;
+	return -1;
+    }
+    
+    private int handleCreat(int vAddress) {
+        String fileName = readVirtualMemoryString(vAddress, MAX_STRING_LENGTH);
+	int fd = getNextFileDescriptor();
+	if (fileName == null || fd == -1)
+		return -1;
+	OpenFile file = ThreadedKernel.fileSystem.open(fileName, false);
+	if (file == null)
+		return -1;
+	file = ThreadedKernel.fileSystem.open(fileName, true);
+	if (file == null)
+		return -1;
+	return fd;
+    }
+    
+    private int handleOpen(int vAddress) {
+        String fileName = readVirtualMemoryString(vAddress, MAX_STRING_LENGTH);
+	int fd = getNextFileDescriptor();
+	if (fileName == null || fd == -1)
+            return -1;
+	OpenFile file = UserKernel.fileSystem.open(fileName, false);
+	if (file == null)
+            return -1;
+        return fd;
+    }
+    
+    private int handleClose(int fd) {
+        if (fd >= MAX_FILES || fd < 0 || filesToBeDeleted.contains(fileList[fd].getName()))
+            return -1;
+        
+	filesToBeDeleted.remove(fileList[fd].getName());
+        fileList[fd].close();
+        fileList[fd] = null;
+	filePosList[fd] = 0;
 	return 0;
     }
+    
+    private int handleWrite(int fd, int bufferStartAddress, int count) {
+        if (fileList[fd] == null || fd < 0 || fd >= MAX_FILES || count < 0)
+		return -1;
+	byte[] dataWrite = new byte[count];
+	int numBytesWritten;
+        
+	int numBytesToWrite = readVirtualMemory(bufferStartAddress, dataWrite, 0, count);
+	if (fd > 1) {
+            numBytesWritten = fileList[fd].write(filePosList[fd], dataWrite, 0,  numBytesToWrite);
+            filePosList[fd] += numBytesWritten;
+        }
+	else
+            numBytesWritten = fileList[fd].write(dataWrite, 0,  numBytesToWrite);
+	
+        if ( numBytesWritten != 0 && numBytesWritten < count )
+            return -1;
+	else
+            return numBytesWritten;
 
+    }
+    
+    private int handleRead(int fd, int bufferStartAddress, int count) {
+        if (fileList[fd] == null || fd < 0 || fd >= MAX_FILES || count < 0)
+		return -1;
+	byte[] dataRead = new byte[count];
+	int numBytesRead;
+	if (fd > 1) {
+		numBytesRead = fileList[fd].read(filePosList[fd], dataRead, 0,  count);
+                filePosList[fd] += numBytesRead;
+        }
+	else
+		numBytesRead = fileList[fd].read(dataRead, 0, count);
+	if (numBytesRead == -1)
+		return -1;
+	int bytesWrittenToProcess = writeVirtualMemory(bufferStartAddress, dataRead, 0, numBytesRead);
+        
+        if (bytesWrittenToProcess == 0)
+            return -1;
+        return bytesWrittenToProcess;
+
+    }
+    
+    private int handleUnlink(int vAddress) {
+        String fileName = readVirtualMemoryString(vAddress, MAX_STRING_LENGTH);
+	if (fileName == null || filesToBeDeleted.contains(fileName))
+		return -1;
+	boolean isDeleted = UserKernel.fileSystem.remove(fileName);
+	if (!isDeleted)
+		return -1;
+	filesToBeDeleted.remove(fileName);
+	return 0;
+    }
 
     private static final int
         syscallHalt = 0,
@@ -397,7 +507,7 @@ public class UserProcess {
 	switch (syscall) {
 	case syscallHalt:
 	    return handleHalt();
-
+        
 
 	default:
 	    Lib.debug(dbgProcess, "Unknown syscall " + syscall);
@@ -435,6 +545,18 @@ public class UserProcess {
 	    Lib.assertNotReached("Unexpected exception");
 	}
     }
+    
+    //TASK 2.1
+    private static int MAX_STRING_LENGTH = 256;
+    private static final int INPUT = 0;
+    private static final int  OUTPUT = 1;
+    private final int MAX_FILES = 18;
+    private OpenFile[] fileList;
+    private int[] filePosList;
+    private int[] fileDescriptorList;
+    private HashSet<String> filesToBeDeleted;
+    Lock processLock;
+    // TASK 2.1
 
     /** The program being run by this process. */
     protected Coff coff;
@@ -491,7 +613,7 @@ public class UserProcess {
     }
     
     private int processCount = 0;
-    private int ID = 0;
+    private int ID;
     private UserProcess parent;
     private LinkedList<UserProcess> children = new LinkedList<UserProcess>();
     
