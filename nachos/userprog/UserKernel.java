@@ -12,15 +12,16 @@ public class UserKernel extends ThreadedKernel {
     /**
      * Allocate a new user kernel.
      */
-    private Lock lock;
-    private LinkedList<Integer> freePages;
+    //private Lock lock;
+    //private LinkedList<Integer> freePages;
     
     public UserKernel() {
 	super();
-        lock = new Lock();
-        freePages = new LinkedList<>();
+        //lock = new Lock();
+        //freePages = new LinkedList<>();
     }
 
+    /*
     public LinkedList<Integer> acquirePages(int numberOfPages){
         lock.acquire();
         LinkedList<Integer> acquiredPages = new LinkedList<>();
@@ -50,6 +51,7 @@ public class UserKernel extends ThreadedKernel {
         
         lock.release();
     }
+    */
     /**
      * Initialize this kernel. Creates a synchronized console and sets the
      * processor's exception handler.
