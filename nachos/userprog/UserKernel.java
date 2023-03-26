@@ -56,10 +56,11 @@ public class UserKernel extends ThreadedKernel {
     public void initialize(String[] args) {
 	super.initialize(args);
         
-        //For use in acquire and release pages methods
+        //Lock and freePgaes for use in acquire and release pages methods above (Task 2)
         lock = new Lock();
         freePages = new LinkedList<>();
-
+        //
+        
 	console = new SynchConsole(Machine.console());
 	
 	Machine.processor().setExceptionHandler(new Runnable() {
