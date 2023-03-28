@@ -154,6 +154,10 @@ public class UserProcess {
 
 	byte[] memory = Machine.processor().getMemory();
 	
+        int count = 0;
+        
+        
+        
 	// for now, just assume that virtual addresses equal physical addresses
 	if (vaddr < 0 || vaddr >= memory.length)
 	    return 0;
