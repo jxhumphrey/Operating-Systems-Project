@@ -36,10 +36,10 @@ public class UserProcess {
         
 	int numPhysPages = Machine.processor().getNumPhysPages();
 	pageTable = new TranslationEntry[numPhysPages];
-	for (int i=0; i<numPhysPages; i++)
+	for (int i=0; i < numPhysPages; i++)
 	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
         
-        //used in task 3, requires mutex
+        //Used in Task 2.1 and 2.3
         ID = processCount;
         Machine.interrupt().disable();
         processLock.acquire();
@@ -512,7 +512,24 @@ public class UserProcess {
 	switch (syscall) {
 	case syscallHalt:
 	    return handleHalt();
-        
+        case syscallExit:
+            return exit(a0);
+        case syscallExec:
+            return exec(a0, a1, a2);
+        case syscallJoin:
+            return join(a0, a1);
+        case syscallCreate:
+	    return handleCreat(a0);
+        case syscallOpen:
+	    return handleOpen(a0);
+        case syscallRead:
+	    return handleRead(a0, a1, a2);
+        case syscallWrite:
+	    return handleWrite(a0, a1, a2);
+        case syscallClose:
+	    return handleClose(a0);
+        case syscallUnlink:
+	    return handleUnlink(a0);
 
 	default:
 	    Lib.debug(dbgProcess, "Unknown syscall " + syscall);
@@ -552,6 +569,7 @@ public class UserProcess {
     }
     
     //TASK 2.1
+    private int processID;
     private static int MAX_STRING_LENGTH = 256;
     private static final int INPUT = 0;
     private static final int  OUTPUT = 1;
@@ -616,19 +634,6 @@ public class UserProcess {
         this.children.add(child);
         return child.processID;
     }
-    
-    //TASK 2.1
-    private int processID;
-    private static int MAX_STRING_LENGTH = 256;
-    private static final int INPUT = 0;
-    private static final int  OUTPUT = 1;
-    private final int MAX_FILES = 18;
-    private OpenFile[] fileList;
-    private int[] filePosList;
-    private int[] fileDescriptorList;
-    private HashSet<String> filesToBeDeleted;
-    Lock processLock;
-    // TASK 2.1
     
     private int processCount = 0;
     private int ID;
