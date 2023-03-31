@@ -153,13 +153,13 @@ public class UserProcess {
 
 	byte[] memory = Machine.processor().getMemory();
 	
-        int count = 0;
+        int lastByte = vaddr + length - 1;
+        int size = Processor.makeAddress(numPages - 1, pageSize - 1);
         
-        
-        
-	// for now, just assume that virtual addresses equal physical addresses
-	if (vaddr < 0 || vaddr >= memory.length)
-	    return 0;
+        //Ensure numPages is not 0, vaddr is a valid address and that we are not reading beyond the program
+        if (numPages == 0 || vaddr < 0 || lastByte > size){
+            return 0;
+        }
 
 	int amount = Math.min(length, memory.length-vaddr);
 	System.arraycopy(memory, vaddr, data, offset, amount);
