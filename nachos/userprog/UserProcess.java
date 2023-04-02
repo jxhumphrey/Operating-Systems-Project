@@ -358,8 +358,15 @@ public class UserProcess {
 	    for (int i=0; i<section.getLength(); i++) {
 		int vpn = section.getFirstVPN()+i;
 
-		// for now, just assume virtual addresses=physical addresses
-		section.loadPage(i, vpn);
+		// Load physical address from virtual address
+                TranslationEntry entry = pageTable[vpn];
+                if (entry == null){
+                    return false;
+                
+                } else {
+                    section.loadPage(i, entry.ppn);
+                }
+                
 	    }
 	}
 	
