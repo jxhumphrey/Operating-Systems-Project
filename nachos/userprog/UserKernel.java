@@ -38,14 +38,9 @@ public class UserKernel extends ThreadedKernel {
         return acquiredPages;
     }
     
-    public void releasePages(TranslationEntry[] entries){
+    public void releasePages(int ppn){
         lock.acquire();
-        
-        for (int i = 0; i < entries.length; ++i) {
-            freePages.add(entries[i].ppn);
-            entries[i].valid = false;
-        }
-        
+        freePages.add(ppn);
         lock.release();
     }
     

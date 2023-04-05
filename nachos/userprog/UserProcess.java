@@ -154,18 +154,34 @@ public class UserProcess {
 
 	byte[] memory = Machine.processor().getMemory();
 	
-        int lastByte = vaddr + length - 1;
-        int size = Processor.makeAddress(numPages - 1, pageSize - 1);
+        int VPage = Processor.pageFromAddress(vaddr);
+        int pgOffset = Processor.offsetFromAddress(vaddr);
+        int lastByte = Processor.pageFromAddress(vaddr+length);
         
-        //Ensure numPages is not 0, vaddr is a valid address and that we are not reading beyond the program
-        if (numPages == 0 || vaddr < 0 || lastByte > size){
-            return 0;
+        int bytesLeftToCopy = length;
+        int buffOffset = offset;
+        
+        // While there is bytes left to transfer to the data array from memory
+        int totalBytesTransfered = 0;
+        while (bytesLeftToCopy > 0 && pgOffset <= lastByte) {
+        
+        int bytesToEndOfPage = pageSize - pgOffset;
+        int bytesToCopy = Math.min(bytesToEndOfPage, bytesLeftToCopy); 
+        int physAddr = Processor.makeAddress(pageTable[VPage].ppn, pgOffset);
+        
+        // Copy virtual memory to the data buffer array
+        System.arraycopy(memory, physAddr, data, buffOffset, bytesToCopy);
+        
+        // Add to the total number of transfered bytes
+        totalBytesTransfered += bytesToCopy;
+        //Update values for next loop (if needed)
+        bytesLeftToCopy -= bytesToCopy;
+        VPage++;
+        buffOffset += bytesToCopy;
+        pgOffset = 0;
         }
 
-	int amount = Math.min(length, memory.length-vaddr);
-	System.arraycopy(memory, vaddr, data, offset, amount);
-
-	return amount;
+	return totalBytesTransfered;
     }
 
     /**
@@ -201,14 +217,34 @@ public class UserProcess {
 
 	byte[] memory = Machine.processor().getMemory();
 	
-	// for now, just assume that virtual addresses equal physical addresses
-	if (vaddr < 0 || vaddr >= memory.length)
-	    return 0;
+        int VPage = Processor.pageFromAddress(vaddr);
+        int pgOffset = Processor.offsetFromAddress(vaddr);
+        int lastByte = Processor.pageFromAddress(vaddr+length);
+        
+        int bytesLeftToCopy = length;
+        int buffOffset = offset;
+        
+        // While there is bytes left to transfer to memory from the data array
+        int totalBytesTransfered = 0;
+        while (bytesLeftToCopy > 0 && pgOffset <= lastByte) {
+        
+        int bytesToEndOfPage = pageSize - pgOffset;
+        int bytesToCopy = Math.min(bytesToEndOfPage, bytesLeftToCopy); 
+        int physAddr = Processor.makeAddress(pageTable[VPage].ppn, pgOffset);
+        
+        // Copy the data buffer array to virtual memory
+        System.arraycopy(data, buffOffset, memory, physAddr, bytesToCopy);
+        
+        // Add to the total number of transfered bytes
+        totalBytesTransfered += bytesToCopy;
+        //Update values for next loop (if needed)
+        bytesLeftToCopy -= bytesToCopy;
+        VPage++;
+        buffOffset += bytesToCopy;
+        pgOffset = 0;
+        }
 
-	int amount = Math.min(length, memory.length-vaddr);
-	System.arraycopy(data, offset, memory, vaddr, amount);
-
-	return amount;
+	return totalBytesTransfered;
     }
 
     /**
@@ -323,8 +359,15 @@ public class UserProcess {
 	    for (int i=0; i<section.getLength(); i++) {
 		int vpn = section.getFirstVPN()+i;
 
-		// for now, just assume virtual addresses=physical addresses
-		section.loadPage(i, vpn);
+		// Load physical address from virtual address
+                TranslationEntry entry = pageTable[vpn];
+                if (entry == null){
+                    return false;
+                
+                } else {
+                    section.loadPage(i, entry.ppn);
+                }
+                
 	    }
 	}
 	
