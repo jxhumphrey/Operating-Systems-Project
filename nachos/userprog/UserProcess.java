@@ -5,6 +5,7 @@ import nachos.threads.*;
 import nachos.userprog.*;
 
 import java.io.EOFException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.HashSet;
 
@@ -35,10 +36,10 @@ public class UserProcess {
         
 	int numPhysPages = Machine.processor().getNumPhysPages();
 	pageTable = new TranslationEntry[numPhysPages];
-	for (int i=0; i<numPhysPages; i++)
+	for (int i=0; i < numPhysPages; i++)
 	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
         
-        //used in task 3, requires mutex
+        //Used in Task 2.1 and 2.3
         ID = processCount;
         Machine.interrupt().disable();
         processLock.acquire();
@@ -611,6 +612,7 @@ public class UserProcess {
     }
     
     //TASK 2.1
+    private int processID;
     private static int MAX_STRING_LENGTH = 256;
     private static final int INPUT = 0;
     private static final int  OUTPUT = 1;
@@ -673,7 +675,7 @@ public class UserProcess {
         //set child parent raltionships
         child.parent = this;
         this.children.add(child);
-        return child.ID;
+        return child.processID;
     }
     
     private int processCount = 0;
@@ -695,7 +697,7 @@ public class UserProcess {
         //get child process with ID == processID
         UserProcess child = null;
         for(int i = 0; i < children.size(); ++i){
-            if(children.get(i).ID == processID) {
+            if(children.get(i).processID == processID) {
                 child = children.get(i);
                 break;
             }
