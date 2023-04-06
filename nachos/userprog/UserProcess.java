@@ -641,7 +641,7 @@ public class UserProcess {
     private static final int pageSize = Processor.pageSize;
     private static final char dbgProcess = 'a';
     
-    /**
+    /*
     Creates and executes a user program with specified arguments in a child 
     process. The method accepts the name of the file that contains the 
     executable, an integer for the number of arguments, and the arguments. 
@@ -683,7 +683,7 @@ public class UserProcess {
     private UserProcess parent;
     private LinkedList<UserProcess> children = new LinkedList<UserProcess>();
     
-    /**
+    /*
     Joins two processes (parent and child). The calling process waits until a 
     specified child process completes execution before continuing its own 
     execution. It accepts two arguments, an integer for the child process ID, 
@@ -719,6 +719,12 @@ public class UserProcess {
     private UThread thread;
     private int exitStatus = 0;
     
+    /*
+    Immediately terminates the current process and closes any file descriptors 
+    opened by that process. Processes that are children of the closed process 
+    will no longer have a parent. It returns the exiting program’s exit status 
+    to its parent process in the status global variable.
+    */
     private int exit(int status){
         //set exitStatus, unload sections, decrement processCount
         exitStatus = status;
