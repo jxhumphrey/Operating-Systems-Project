@@ -3,9 +3,10 @@
 
 int main(){
     char *argv2[] = {"arg1", "arg2"};
-    exec("echo.coff", 2, argv);
+    int processID1 = exec("echo.coff", 2, argv);
     char *argv[] = {""};
-    exec("halt.coff", 1, argv);
-    join(1, 1);
-    exit(1);
+    int processID2 = exec("halt.coff", 1, argv);
+    join(processID1, 1);
+    join(processID1, 1);
+    std::cout << "exit code: " << exit(1);
 }
