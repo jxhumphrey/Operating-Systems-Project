@@ -5,23 +5,14 @@ char loremIpsum[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, se
 char loremIpsumRead[sizeof(loremIpsum)] = {0};
 
 int main() {
-    int fd = creat("perftest.bin");
-    if (fd == -1) {
-        printf("Failed to creat perftest.bin\n");
+    //Attempt to open file with file descriptor of 1 (does not exist)
+    int fd_close = close(1)
+    if (fd_close != -1) {
+        printf("Error\n");
+        exit(1);
+    } else { //This block of code is supposed to execute
+        printf("Cannot close a file that does not exist\n");
         exit(1);
     }
-
-    int i;
-    for (i = 0; i < 32; i++) {
-        int written = write(fd, loremIpsum, sizeof(loremIpsum) - 1);
-        if (written != (sizeof(loremIpsum) - 1)) {
-            printf("Failed to write, only wrote: %d bytes\n", written);
-            exit(1);
-        }
-        int readIn = read(fd, loremIpsumRead, sizeof(loremIpsumRead) - 1);
-        if (readIn == -1) {
-            printf("Failed to read\n", readIn);
-            exit(1);
-        }
-    }
 }
+
