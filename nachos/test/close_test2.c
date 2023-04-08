@@ -6,7 +6,7 @@ char loremIpsumRead[sizeof(loremIpsum)] = {0};
 
 int main() {
     //Attempt to open file with file descriptor of 1 (does not exist)
-    int fd_close = close(1)
+    int fd_close = close(1);
     if (fd_close != -1) {
         printf("Error\n");
         exit(1);
