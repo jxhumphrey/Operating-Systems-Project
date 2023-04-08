@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "syscall.h"
+#include "time.h"
 
 char text = "IT will be seen that this mere painstaking burrower and 
 grub -worm of a poor devil of a Sub -Sub appears to have gone 
@@ -19,8 +20,8 @@ int main() {
     int fd = creat("test.bin");
 
     for (int i = 0; i < 32; i++) {
-        int written = write(fd, loremIpsum, sizeof(text) - 1);
-        if (written != (sizeof(loremIpsum) - 1)) {
+        int written = write(fd, text, sizeof(text) - 1);
+        if (written != (sizeof(text) - 1)) {
             printf("Failed to write, only wrote: %d bytes\n", written);
             exit(1);
         }
@@ -30,4 +31,8 @@ int main() {
             exit(1);
         }
     }
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf(time_spent);
 }
