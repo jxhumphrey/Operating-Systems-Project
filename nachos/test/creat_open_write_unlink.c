@@ -51,6 +51,7 @@ int main() {
         printf("%s", printfBuf);
         i++;
     }
+
     memset(printfBuf, 0, sizeof(printfBuf));
     memcpy(printfBuf, loremIpsumRead + size, sizeof(printfBuf) - (sizeof(loremIpsumRead) - size));
     printf("%s", printfBuf);

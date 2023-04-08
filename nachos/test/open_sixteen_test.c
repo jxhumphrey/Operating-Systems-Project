@@ -5,23 +5,29 @@ char loremIpsum[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, se
 char loremIpsumRead[sizeof(loremIpsum)] = {0};
 
 int main() {
-    int fd = creat("perftest.bin");
+    int fd = creat("helloWorld.bin");
+
     if (fd == -1) {
-        printf("Failed to creat perftest.bin\n");
+        printf("Failed to create helloWorld.bin\n");
         exit(1);
     }
-
-    int i;
-    for (i = 0; i < 32; i++) {
-        int written = write(fd, loremIpsum, sizeof(loremIpsum) - 1);
-        if (written != (sizeof(loremIpsum) - 1)) {
-            printf("Failed to write, only wrote: %d bytes\n", written);
-            exit(1);
-        }
-        int readIn = read(fd, loremIpsumRead, sizeof(loremIpsumRead) - 1);
-        if (readIn == -1) {
-            printf("Failed to read\n", readIn);
+    //Create and open 16 files, the max amount for this file system
+    for(int i = 0; i++; i<17) {
+        char temp[] = itoa(i)
+        int fd = creat(temp);
+        int fd_open = open(fd);
+        if(fd_open == -1) {
             exit(1);
         }
     }
+
+    //Try to create a file
+    int fd_creat_one_more = creat("newFile.bin");
+    if(fd_open == -1) {
+            printf("Reached the limit to create new files!\n");
+            exit(1);
+        }
+    
+    
+ 
 }
