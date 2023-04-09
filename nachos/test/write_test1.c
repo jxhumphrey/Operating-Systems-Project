@@ -8,17 +8,15 @@ int main() {
         exit(1);
     }
 
-    int fd_open = open(fd);
-
     //Should work
-    int written = write(fd_open, "Hello\n", 6);
+    int written = write(fd, "Hello\n", 6);
     if (written == -1) {
         printf("Failed to write\n");
         exit(1);
     }
 
     //Does not work
-    int written = write(200, "Hello\n", 6);
+    written = write(200, "Hello\n", 6);
     if (written == -1) {
         printf("Failed to write\n");
         exit(1);
@@ -27,4 +25,3 @@ int main() {
         exit(1);
     }
 }
-

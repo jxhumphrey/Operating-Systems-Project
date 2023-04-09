@@ -9,6 +9,12 @@ int main() {
         exit(1);
     }
     
+    int close_valid = close(fd);
+    if (close_valid == -1) {
+        printf("failed to close helloWorld.bin\n");
+        exit(1);
+    }
+    
     //Should work
     int fd_unlink_valid = unlink("helloWorld.bin");
 
