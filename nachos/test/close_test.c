@@ -1,5 +1,7 @@
 #include "stdio.h"
 #include "syscall.h"
+#include "stdlib.h"
+#include "fcntl.h"
 
 int main() {
     int fd = creat("helloWorld.bin");

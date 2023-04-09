@@ -20,8 +20,9 @@ char textReadIn[sizeof(text)];
 int main() {
     int fd = creat("test.bin");
 
-    int i;
-    for (i = 0; i < 32; i++) {
+    clock_t begin = clock();
+
+    for (int i = 0; i < 32; i++) {
         int written = write(fd, text, sizeof(text) - 1);
         if (written != (sizeof(text) - 1)) {
             printf("Failed to write, only wrote: %d bytes\n", written);
@@ -33,4 +34,7 @@ int main() {
             exit(1);
         }
     }
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("%f", time_spent);
 }
