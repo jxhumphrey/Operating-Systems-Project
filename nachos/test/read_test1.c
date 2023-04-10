@@ -24,6 +24,5 @@ int main() {
         printf("Failed to read the correct amount from file\n");
         exit(1);
     }
- 
 }
 

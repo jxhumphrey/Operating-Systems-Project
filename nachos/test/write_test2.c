@@ -8,11 +8,9 @@ int main() {
         exit(1);
     }
     
-    int written = write(fd_open, "Hello\n", 1);
+    int written = write(fd, "Hello\n", 1);
     if (written == -1) {
         printf("Failed to write\n");
         exit(1);
     }
 }
-
-
